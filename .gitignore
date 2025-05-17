@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# production
+dist/
+**/dist/
+
+# pnpm lockfile
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+
+# env
+.env
+**/.env
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# ts build metadata
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
