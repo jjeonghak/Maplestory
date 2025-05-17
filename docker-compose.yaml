@@ -1,0 +1,101 @@
+version: '1'
+services:
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+    - "29092:29092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+    - ZOOKEEPER_SERVER_ID=1
+    - ZOOKEEPER_CLIENT_PORT=2181
+    - ZOOKEEPER_TICK_TIME=2000
+    - ZOOKEEPER_INIT_LIMIT=5
+    - ZOOKEEPER_SYNC_LIMIT=2
+
+
+  gateway-mongo:
+    image: mongo:6
+    container_name: gateway-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - gateway-mongo-data:/data/db
+
+  gateway-server:
+    build:
+      context: .
+      dockerfile: ./apps/gateway-server/Dockerfile
+    env_file:
+      - ./apps/gateway-server/.env
+    depends_on:
+      - kafka
+      - gateway-mongo
+    environment:
+      MONGO_URI: mongodb://gateway-mongo:27017/gateway-db
+    ports:
+      - "3001:3000"
+
+  
+  auth-mongo:
+    image: mongo:6
+    container_name: auth-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - auth-mongo-data:/data/db
+
+  auth-server:
+    build:
+      context: .
+      dockerfile: ./apps/auth-server/Dockerfile
+    env_file:
+      - ./apps/auth-server/.env
+    depends_on:
+      - kafka
+      - auth-mongo
+    environment:
+      MONGO_URI: mongodb://auth-mongo:27017/auth-db
+    ports:
+      - "3002:3000"
+
+
+  event-mongo:
+    image: mongo:6
+    container_name: event-mongo
+    ports:
+      - "27019:27017"
+    volumes:
+      - event-mongo-data:/data/db
+
+  event-server:
+    build:
+      context: .
+      dockerfile: ./apps/event-server/Dockerfile
+    env_file:
+      - ./apps/event-server/.env
+    depends_on:
+      - kafka
+      - event-mongo
+    environment:
+      MONGO_URI: mongodb://event-mongo:27017/event-db
+    ports:
+      - "3003:3000"
+
+volumes:
+  gateway-mongo-data:
+  auth-mongo-data:
+  event-mongo-data:
