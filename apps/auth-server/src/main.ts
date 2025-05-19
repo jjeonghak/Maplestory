@@ -1,22 +1,18 @@
-import { NestFactory } from '@nestjs/core';
-import type { NestExpressApplication } from '@nestjs/platform-express';
+import { NestApplication, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ValidationPipe } from '@nestjs/common';
+import { LoggingInterceptor } from './global/interceptor/log.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-      },
-      consumer: {
-          groupId: 'auth-server',
-      },
-    }
-  })
-  await app.startAllMicroservices();
-  await app.listen(process.env.PORT || 3002);
+  const app = await NestFactory.create<NestApplication>(AppModule);
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true
+    })
+  );
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

@@ -7,7 +7,7 @@ COPY . .
 RUN corepack enable && corepack prepare pnpm@8.15.4 --activate
 RUN pnpm install
 
-WORKDIR /app/apps/event-server
+WORKDIR /app/apps/auth-server
 
 RUN pnpm run build
 
