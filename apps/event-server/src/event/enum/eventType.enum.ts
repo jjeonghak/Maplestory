@@ -1,0 +1,4 @@
+export enum EventType {
+  ATTENDANCE = 'ATTENDANCE',
+  INVITATION = 'INVITATION'
+}
