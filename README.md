@@ -3,7 +3,7 @@
 
 <br>
 
-## 폴더 구조
+# 폴더 구조
 
 ```
 project-root/
@@ -51,7 +51,7 @@ project-root/
 
 <br>
 
-## 실행 방법
+# 실행 방법
 
 ```bash
 git clone https://github.com/jjeonghak/Maplestory.git maplestory
@@ -71,7 +71,7 @@ docker-compose up --build
 
 <br>
 
-## 과제 설계
+# 과제 설계
 ### 각 서버마다 통신방법은 어떤 것을 사용하지?
 초기에는 `kafka`를 활용한 이벤트 기반 통신을 적용하려고 생각했습니다.  
 이를 통해 비동기적으로, 각 서버들이 장애가 발생해도 오류 전파를 막고 유연하게 대처할 수 있다고 예상했습니다.  
@@ -98,69 +98,593 @@ docker-compose up --build
 
 <br>
 
-## API 사용 방법
+# API 사용 방법
 
 ### HOST - https://localhost:3001
 
 <br>
 
-### 1. AUTH
+## 1. AUTH
 
-| **METHOD** | **PATH** | **PARAM** | **QUERY** | **BODY** | **AUTH** | **DESCRIPTION** |
-|--|--|--|--|--|--|--|
-| **POST** | `/auth/signup` | - | - | `email` - 이메일 형식의 문자열 <br> `password` - 비밀번호 <br> `role` - 권한(optional) | - | 회원가입 |
-| **POST** | `/auth/signin` | - | - | `email` - 이메일 형식의 문자열 <br> `password` - 비밀번호 | - | 로그인 |
-| **PATCH** | `/auth/signout` | - | - | - | JWT | 로그아웃 |
-| **PATCH** | `/auth/refresh` | - | - | `refreshToken` - 리플레쉬 토큰값 | - | 리플레쉬 |
-| **DELETE** | `/auth/withdraw` | - | - | - | JWT | 회원탈퇴 |
+### 회원가입
 
-* 권한(`role`)은 `USER`, `OPERATOR`, `AUDITOR`, `ADMIN`
-* 기본적으로 JWT 토큰 사용시, `Bearer ` 접두사 필수
-* 리플레쉬 토큰은 `Bearer ` 접두사없이 바디에 넣어서 사용
+**[ Request ]**
 
-<br>
+```
+POST /auth/signup HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Accept: application/json
+Host: localhost:3001
 
-### 2. EVENT
-
-| **METHOD** | **PATH** | **PARAM** | **QUERY** | **BODY** | **AUTH** | **DESCRIPTION** |
-|--|--|--|--|--|--|--|
-| **GET** | `/event` | - | `order` - 정렬방법(ASC, DESC) <br> `pageNumber` - 페이지 번호 <br> `pageSize` - 페이지 크기 | - | JWT | 활성화된 이벤트 목록 조회 |
-| **GET** | `/event` | `id` - 이벤트 아이디 | - | - | JWT | 활성화된 이벤트 상세 조회 |
+{
+  "email": "user@google.com",
+  "password": "qwer1234@@AA"
+  "role": "USER"
+}
+```
 
 <br>
 
-### 2-1. EVENT-ADMIN
+**[ Request Body ]**
 
-| **METHOD** | **PATH** | **PARAM** | **QUERY** | **BODY** | **AUTH** | **DESCRIPTION** |
-|--|--|--|--|--|--|--|
-| **POST** | `/admin/event` | - | - | `title` - 이벤트 이름 <br> `description` - 이벤트 설명 <br> `type` - 이벤트 타입 <br> `startedAt` - 이벤트 시작일시 <br> `expiredAt` - 이벤트 종료일시 <br> `active` - 이벤트 활성화여부 | JWT | 이벤트 생성 |
-| **GET** | `/admin/event` | - | `order` - 정렬방법(ASC, DESC) <br> `pageNumber` - 페이지 번호 <br> `pageSize` - 페이지 크기 | - | JWT | 모든 이벤트 목록 조회 |
-| **GET** | `/admin/event` | `id` - 이벤트 아이디 | - | - | JWT | 이벤트 상세 조회 |
-
-* 이벤트 타입(`type`)은 `ATTENDANCE`, `INVITATION`
+| 필드명   | 타입   | 필수 | 설명                                                         |
+|----------|--------|------|--------------------------------------------------------------|
+| email    | string | ✅   | 이메일 형식의 문자열                                          |
+| password | string | ✅   | 비밀번호                                                     |
+| role     | string | ❌(default USER)   | 권한 (USER, OPERATOR, AUDITOR, ADMIN)                        |
 
 <br>
 
 
-### 3. REWARD
-| **METHOD** | **PATH** | **PARAM** | **QUERY** | **BODY** | **AUTH** | **DESCRIPTION** |
-|--|--|--|--|--|--|--|
-| **GET** | `/reward` | - | `order` - 정렬방법(ASC, DESC) <br> `pageNumber` - 페이지 번호 <br> `pageSize` - 페이지 크기 | - | JWT | 모든 보상 목록 조회 |
-| **GET** | `/reward` | `id` - 보상 아이디 | - | - | JWT | 보상 상세 조회 |
-| **POST** | `/reward/application` | - | - | `rewardId` - 보상 아이디 | JWT | 보상 신청 |
-| **GET** | `/reward/application/list` | - | `order` - 정렬방법(ASC, DESC) <br> `pageNumber` - 페이지 번호 <br> `pageSize` - 페이지 크기 | - | JWT | 자신의 신청 목록 조회 |
+### 로그인
+
+---
+
+**[ Request ]**
+
+```
+POST /auth/signin HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Accept: application/json
+Host: localhost:3001
+
+{
+  "email": "user@google.com",
+  "password": "qwer1234@@AA"
+}
+```
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명   | 타입   | 필수 | 설명     |
+|----------|--------|------|----------|
+| email    | string | ✅   | 이메일   |
+| password | string | ✅   | 비밀번호 |
+
+<br>
+
+
+### 로그아웃
+
+---
+
+**[ Request ]**
+
+```
+PATCH /auth/signout HTTP/1.1
+Authorization: Bearer eyJhbGciOi...xyz
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+### 리프레쉬
+
+---
+
+**[ Request ]**
+
+```
+PATCH /auth/refresh HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Host: localhost:3001
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI..."
+}
+```
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명       | 타입   | 필수 | 설명              |
+|--------------|--------|------|-------------------|
+| refreshToken | string | ✅   | 리플레쉬 토큰 값  |
+
+<br>
+
+### 회원탈퇴
+
+---
+
+**[ Request ]**
+
+```
+DELETE /auth/withdraw HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+## 2. EVENT
+
+### 활성화된 이벤트 목록 조회
+---
+
+**[ Request ]**
+
+```
+GET /event?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Query Parameters ]**
+
+| 이름       | 타입   | 필수 | 설명                       |
+|------------|--------|------|----------------------------|
+| pageNumber | number | ✅    | 페이지 번호              |
+| pageSize   | number | ✅    | 한 페이지 크기            |
+| order      | string | ✅   | 정렬 순서 (ASC / DESC)    |
+
+<br>
+
+### 이벤트 상세 조회
+
+---
+
+**[ Request ]**
+
+```
+GET /event/682aedd6968327649d82cc00 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Path Parameter ]**
+
+| 이름     | 타입   | 필수 | 설명         |
+|----------|--------|------|--------------|
+| id  | string | ✅   | 이벤트 ID    |
+
+<br>
+
+### 이벤트 등록 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+POST /admin/event HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+
+{
+  "title": "출석 이벤트",
+  "description": "매일 출석해서 이벤트 참여하세요.",
+  "startedAt": "2025-06-01T00:00:00",
+  "expiredAt": "2025-06-30T00:00:00",
+  "type": "ATTENDANCE",
+  "active": true
+}
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명        | 타입     | 필수 | 설명                     |
+|---------------|----------|------|--------------------------|
+| title         | string   | ✅   | 이벤트 제목              |
+| description   | string   | ✅   | 이벤트 설명              |
+| startedAt     | string   | ✅   | 시작일시       |
+| expiredAt       | string   | ✅   | 종료일시      |
+| type    | string   | ✅   | 이벤트 타입(ATTENDANCE, INVITATION)     |
+| active       | boolean   | ✅   | 활성화 여부      |
+
+<br>
+
+### 모든 이벤트 목록 조회 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+GET /admin/event?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Query Parameters ]**
+
+| 이름       | 타입   | 필수 | 설명                       |
+|------------|--------|------|----------------------------|
+| pageNumber | number | ✅    | 페이지 번호              |
+| pageSize   | number | ✅    | 한 페이지 크기            |
+| order      | string | ✅   | 정렬 순서 (ASC / DESC)    |
+
+<br>
+
+### 이벤트 상세 조회 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+GET /admin/event/682aedd6968327649d82cc00 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Path Parameter ]**
+
+| 이름     | 타입   | 필수 | 설명         |
+|----------|--------|------|--------------|
+| id  | string | ✅   | 이벤트 ID    |
+
+<br>
+
+## 3. REWARD
+
+### 모든 보상 목록 조회
+
+---
+
+**[ Request ]**
+
+```
+GET /reward?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Query Parameters ]**
+
+| 이름       | 타입   | 필수 | 설명                       |
+|------------|--------|------|----------------------------|
+| pageNumber | number | ✅    | 페이지 번호              |
+| pageSize   | number | ✅    | 한 페이지 크기            |
+| order      | string | ✅   | 정렬 순서 (ASC / DESC)    |
 
 
 <br>
 
-### 3-1. REWARD-ADMIN
-| **METHOD** | **PATH** | **PARAM** | **QUERY** | **BODY** | **AUTH** | **DESCRIPTION** |
-|--|--|--|--|--|--|--|
-| **POST** | `/admin/reward` | - | - | `eventId` - 이벤트 아이디 <br> `title` - 보상 이름 <br> `description` - 보상 설명 <br> `type` - 보상 타입 <br> `startedAt` - 보상 시작일시 <br> `expiredAt` - 보상 종료일시 <br> `quantity` - 보상 수량 | JWT | 보상 생성 |
-| **GET** | `/admin/reward` | `id` - 보상 아이디 | - | - | JWT | 보상 상세 조회 |
-| **GET** | `/admin/reward/application` | - | `order` - 정렬방법(ASC, DESC) <br> `pageNumber` - 페이지 번호 <br> `pageSize` - 페이지 크기 | - | JWT | 모든 유저의 신청 목록 조회 |
-| **PATCH** | `/admin/reward/application` | - | - | `id` - 신청 아이디 <br> `approved` - 승인 여부 | JWT | 신청 승인 |
+### 보상 상세 조회
 
-* 보상 타입(`type`)은 `COUPON`, `ITEM`, `POINT`
+---
+
+**[ Request ]**
+
+```
+GET /reward/682aedd6968327649d82cc00 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Path Parameter ]**
+
+| 이름     | 타입   | 필수 | 설명         |
+|----------|--------|------|--------------|
+| id  | string | ✅   | 이벤트 ID    |
+
+<br>
+
+### 보상 신청
+
+---
+
+<br>
+
+**[ Request ]**
+
+```
+POST /reward/application HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+
+{
+  "rewardId": "682aedd6968327649d82cc00"
+}
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명        | 타입     | 필수 | 설명                     |
+|---------------|----------|------|--------------------------|
+| rewardId         | string   | ✅   | 보상 ID              |
+
+<br>
+
+### 자신의 신청 목록 조회
+
+---
+
+**[ Request ]**
+
+```
+GET /reward/application/list?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Query Parameters ]**
+
+| 이름       | 타입   | 필수 | 설명                       |
+|------------|--------|------|----------------------------|
+| pageNumber | number | ✅    | 페이지 번호              |
+| pageSize   | number | ✅    | 한 페이지 크기            |
+| order      | string | ✅   | 정렬 순서 (ASC / DESC)    |
+
+<br>
+
+### 보상 등록 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+POST /admin/reward HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+
+{
+  "eventId": "682aedd6968327649d82cc00"
+  "title": "출석 보상",
+  "description": "출석 이벤트 보상입니다.",
+  "startedAt": "2025-06-01T00:00:00",
+  "expiredAt": "2025-06-30T00:00:00",
+  "type": "COUPON",
+  "quantity": 1000
+}
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명        | 타입     | 필수 | 설명                     |
+|---------------|----------|------|--------------------------|
+| eventId         | string   | ✅   | 이벤트 ID              |
+| title         | string   | ✅   | 보상 제목              |
+| description   | string   | ✅   | 보상 설명              |
+| startedAt     | string   | ✅   | 시작일시       |
+| expiredAt       | string   | ✅   | 종료일시      |
+| type    | string   | ✅   | 보상 타입(COUPON, ITEM, POINT)     |
+| quantity       | number   | ✅   | 보상 수량      |
+
+<br>
+
+
+### 보상 상세 조회 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+GET /admin/reward/682aedd6968327649d82cc00 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Path Parameter ]**
+
+| 이름     | 타입   | 필수 | 설명         |
+|----------|--------|------|--------------|
+| id  | string | ✅   | 이벤트 ID    |
+
+<br>
+
+
+### 모든 신청 목록 조회 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+GET /admin/reward/application?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Query Parameters ]**
+
+| 이름       | 타입   | 필수 | 설명                       |
+|------------|--------|------|----------------------------|
+| pageNumber | number | ✅    | 페이지 번호              |
+| pageSize   | number | ✅    | 한 페이지 크기            |
+| order      | string | ✅   | 정렬 순서 (ASC / DESC)    |
+
+<br>
+
+### 보상 신청 승인 (관리자용)
+
+---
+
+**[ Request ]**
+
+```
+PATCH /admin/reward/application HTTP/1.1
+Content-Type: application/json;charset=UTF-8
+Authorization: Bearer eyJhbGciOi...abc
+Host: localhost:3001
+
+{
+  "id": "682aedd6968327649d82cc00"
+  "approved": true
+}
+```
+
+<br>
+
+**[ Headers ]**
+
+| 이름          | 필수 | 설명               |
+|---------------|------|--------------------|
+| Authorization | ✅   | Bearer 액세스 토큰 |
+
+<br>
+
+**[ Request Body ]**
+
+| 필드명        | 타입     | 필수 | 설명                     |
+|---------------|----------|------|--------------------------|
+| id         | string   | ✅   | 보상 신청 ID              |
+| approved         | boolean   | ✅   | 승인 여부              |
+
 
 <br>
