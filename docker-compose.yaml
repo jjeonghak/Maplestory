@@ -26,6 +26,11 @@ services:
   #   - ZOOKEEPER_INIT_LIMIT=5
   #   - ZOOKEEPER_SYNC_LIMIT=2
 
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - '6379:6379'
 
   gateway-server:
     build:
@@ -79,6 +84,7 @@ services:
       - ./apps/event-server/.env
     depends_on:
       # - kafka
+      - redis
       - event-mongo
     environment:
       MONGO_URI: mongodb://event-mongo:27017/event-db
