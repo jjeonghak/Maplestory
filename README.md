@@ -3,7 +3,10 @@
 
 <br>
 
-# 폴더 구조
+# MSA 구조
+
+![msa](https://github.com/user-attachments/assets/616af209-d702-4856-86d3-5b4169275571)
+
 
 ```
 project-root/
@@ -72,7 +75,7 @@ docker-compose up --build
 <br>
 
 # 과제 설계
-### 각 서버마다 통신방법은 어떤 것을 사용하지?
+### 1. 각 서버마다 통신방법은 어떤 것을 사용하지?
 초기에는 `kafka`를 활용한 이벤트 기반 통신을 적용하려고 생각했습니다.  
 이를 통해 비동기적으로, 각 서버들이 장애가 발생해도 오류 전파를 막고 유연하게 대처할 수 있다고 예상했습니다.  
 하지만 무조건 동기적으로 응답을 해야하는 요청들이 많았고, `http` 통신으로도 충분히 사용하는 것에 무리가 없다고 판단했습니다.  
@@ -80,7 +83,7 @@ docker-compose up --build
 
 <br>
 
-### 보상 신청 중복을 막으려면 어떤식으로 구현해야하지?
+### 2. 보상 신청 중복을 막으려면 어떤식으로 구현해야하지?
 우선 가장 먼저 떠오른 방법이 로컬 메모리에서 전역으로 `spin lock` 객체를 두어 동시성을 제어하는 것 입니다.  
 현재 모든 서버들이 한대씩만 돌아가도록 설정해두어서 크게 문제되지 않는 방법이였습니다.  
 하지만 MSA 기반의 아키텍처는 기본적으로 `scale-out`을 고려해야 했고, 해당 방법은 전혀 좋지 못한 방법이라고 판단했습니다.  
@@ -89,7 +92,7 @@ docker-compose up --build
 
 <br>
 
-### 보상 획득 기준은 어떤식으로 설계하지?
+### 3. 보상 획득 기준은 어떤식으로 설계하지?
 이벤트 보상에 대해 어떤식으로 지급할지 고민했습니다.  
 초기 설계에서는 이벤트도 종류는 초대, 출석 이벤트로 분류하고, 보상 종류는 쿠폰, 아이템, 포인트로 분류했습니다.  
 하지만 마감기간 내에 이벤트 종류 별로 완료 여부를 검사하고, 보상 종류 별로 지급하는 것이 쉽지 않겠다는 생각을 했습니다.  
@@ -110,7 +113,7 @@ docker-compose up --build
 
 **[ Request ]**
 
-```
+```http
 POST /auth/signup HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Accept: application/json
@@ -142,7 +145,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 POST /auth/signin HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Accept: application/json
@@ -172,7 +175,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 PATCH /auth/signout HTTP/1.1
 Authorization: Bearer eyJhbGciOi...xyz
 Host: localhost:3001
@@ -194,7 +197,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 PATCH /auth/refresh HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Host: localhost:3001
@@ -220,7 +223,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 DELETE /auth/withdraw HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -243,7 +246,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /event?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -275,7 +278,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /event/682aedd6968327649d82cc00 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -305,7 +308,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 POST /admin/event HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Authorization: Bearer eyJhbGciOi...abc
@@ -350,7 +353,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /admin/event?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -382,7 +385,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /admin/event/682aedd6968327649d82cc00 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -414,7 +417,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /reward?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -447,7 +450,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /reward/682aedd6968327649d82cc00 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -479,7 +482,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 POST /reward/application HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Authorization: Bearer eyJhbGciOi...abc
@@ -514,7 +517,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /reward/application/list?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -546,7 +549,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 POST /admin/reward HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Authorization: Bearer eyJhbGciOi...abc
@@ -594,7 +597,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /admin/reward/682aedd6968327649d82cc00 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -625,7 +628,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 GET /admin/reward/application?order=ASC&pageNumber=1&pageSize=10 HTTP/1.1
 Authorization: Bearer eyJhbGciOi...abc
 Host: localhost:3001
@@ -657,7 +660,7 @@ Host: localhost:3001
 
 **[ Request ]**
 
-```
+```http
 PATCH /admin/reward/application HTTP/1.1
 Content-Type: application/json;charset=UTF-8
 Authorization: Bearer eyJhbGciOi...abc
